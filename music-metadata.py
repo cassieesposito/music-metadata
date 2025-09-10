@@ -6,7 +6,8 @@ SX_API='https://isrc-api.soundexchange.com/api/ext'
 from flask import Flask, jsonify, render_template, request
 
 import requests
-# import pprint
+
+from pprint import pp as pprint
 
 
 
@@ -29,7 +30,7 @@ def getAlbumData():
     return formAlbumOutput(request.args.get('deezerID'))
 
 @deezerData.route('/track')
-def getTrackData():
+def getAlbumDataFromTrack():
     trackID=request.args.get('deezerID')
     track = requests.get(url=f'{DEEZER_API}/track/{trackID}').json()
     return formAlbumOutput(track['album']['id'])
@@ -39,27 +40,14 @@ def getTrackData():
 def formAlbumOutput(deezerID):
     dzData = requests.get(url=f'{DEEZER_API}/album/{deezerID}').json()
 
-    session = soundexchangeSession()
-    sxData = session.post(f'{SX_API}/recordings', json={
-                                                "searchFields":{"icpn": dzData['upc']},
-                                                "start":0,
-                                                "number":100,
-                                                "showReleases":True
-                                                }).json()
-    
-    # pprint.pp(sxData)
+    sxSession = soundexchangeSession()
+    sxData = sxSession.post(f'{SX_API}/recordings', json={  "searchFields": {"icpn": dzData['upc']},
+                                                            "start": 0,
+                                                            "number": 100,
+                                                            "showReleases": True
+                                                            }).json()
 
-    tracks = []
-    for track in sxData['recordings']:
-        tracks.append({ 'title': track['recordingTitle'],
-                        'artists': track['recordingArtistName'].split(' ♦ '),
-                        'length': track['duration'],
-                        'version': track['recordingVersion'],
-                        'year': track['recordingYear'],
-                        'album': track['releaseName'],
-                        'releaseLabel': track['releaseLabel'].split(' ♦ '),
-                        'releaseDate': track['releaseDate']
-                       })
+    tracks = buildTracks(dzData,sxData, sxSession)
 
     output = {'id':deezerID,
                'title': dzData['title'],
@@ -78,6 +66,44 @@ def soundexchangeSession():
     session = requests.session()
     session.get(f'{SX_API}/login')
     return session
+
+def buildTracks(dzData,sxData,sxSession):
+    tracks = []
+
+    for record in dzData['tracks']['data']:
+        track = {'dz' : {}, 'sx' : {}}
+        dzTrack = requests.get(url=f'{DEEZER_API}/track/{record['id']}').json()
+        sxTracks = [track for track in sxData['recordings'] if track['isrc'] == dzTrack['isrc']]
+        if not sxTracks:
+            sxRes = sxSession.post (f'{SX_API}/recordings/', json={ "searchFields": {"isrc":dzTrack['isrc']},
+                                                                    "start": 0,
+                                                                    "number": 100,
+                                                                    "showReleases": True
+                                                                    }).json()
+            if sxRes['numberOfRecordings']:
+                sxTracks = sxRes['recordings']
+
+        track['dz'] |= {    'title': dzTrack['title'],
+                            'track': dzTrack['track_position'],
+                            'disk': dzTrack['disk_number'],
+                            'artist': dzTrack['artist']['name'],
+                            'isrc': dzTrack['isrc'],
+                            'artists': list(map(lambda artist: artist['name'], dzData['contributors'])),
+                            'length': f'{int(dzTrack['duration'] / 60)}:{dzTrack['duration'] % 60}',
+                            'date': dzTrack['release_date']
+                            }
+        if sxTracks:      
+            track['sx'] |= {'title': [ e.get('recordingTitle') for e in sxTracks ],
+                            'length': [ e.get('duration') for e in sxTracks ],
+                            'version': [ e.get('recordingVersion') for e in sxTracks ],
+                            'isrcValid': [ e.get('isValidIsrc') for e in sxTracks ],
+                            'year': [ e.get('recordingYear') for e in sxTracks ],
+                            'label': [ e.get('releaseLabel') for e in sxTracks ],
+                            'date': [ e.get('releaseDate') for e in sxTracks ]
+                            }
+        tracks.append(track)
+            
+    return tracks
 
 
 

@@ -25,21 +25,20 @@ displayData = (data) => {
                 <td>Year</td>
                 <td>Label</td>
                 <td>Release Date</td>
-            </tr>
-    `
+            </tr>`
 
 
     data.tracks.forEach((track, index) => {
         trackList = document.getElementById('trackList')
         trackList.innerHTML += `<tr>    
                                     <td>${index+1}</td>
-                                    <td>${track.title}</td>
-                                    <td>${track.artists}</td>
-                                    <td>${track.length}</td>
-                                    <td>${track.version}</td>
-                                    <td>${track.year}</td>
-                                    <td>${track.releaseLabel}</td>
-                                    <td>${track.releaseDate}</td>
+                                    <td><a href="https://isrc.soundexchange.com/?tab=%22code%22&isrcCode=%22${track.dz.isrc}%22&showReleases=true">${track.sx.title}</a></td>
+                                    <td>${track.dz.artists}</td>
+                                    <td>${track.dz.length}</td>
+                                    <td>${track.sx.version}</td>
+                                    <td>${track.sx.year}</td>
+                                    <td>${track.sx.label.toString().replace('/','<br>')}</td>
+                                    <td>${track.sx.date}</td>
                                 </tr>`
     });
 
