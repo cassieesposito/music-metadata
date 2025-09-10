@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="index.js"></script>
+    <title>Music Metadata</title>
+
+    <style>
+        body {
+            background-color: black;
+            color: skyblue
+        }
+        
+        .input-row {
+            display: flex;
+            align-items: left;
+            margin-bottom: 12px;
+        }
+        
+        .input-label {
+            min-width: 140px;
+            margin-right: 12px;
+        }
+        
+        .input-textbox {
+            flex: 1;
+            padding: 6px 10px;
+            margin-right: 12px;
+        }
+    </style>
+
+</head>
+
+<body>
+    <!-- <div class="input-row">
+        <label class="input-label" for="artistID">Artist ID:</label>
+        <input class="input-textbox" type="text" id="artistID" />
+        <button onclick="lookup('artist')">Lookup</button>
+    </div> -->
+    <div class="input-row">
+        <label class="input-label" for="albumID">Deezer Album ID:</label>
+        <input class="input-textbox" type="text" id="albumID" />
+        <button onclick="lookup('album')">Lookup</button>
+    </div>
+    <div class="input-row">
+        <label class="input-label" for="trackID">Deezer Track ID:</label>
+        <input class="input-textbox" type="text" id="trackID" />
+        <button onclick="lookup('track')">Lookup</button>
+    </div>
+
+    <hr>
+
+    <div id="output">
+        <table>
+            <tr>
+                <td>Title</td>
+                <td id="title"></td>
+            </tr>
+            <tr>
+                <td>Artist</td>
+                <td id="artist"></td>
+            </tr>
+            <tr>
+                <td>Deezer "Release Date"</td>
+                <td id="deezerReleaseDate"></td>
+            </tr>
+            <tr>
+                <td>UPC</td>
+                <td id="upc"></td>
+            </tr>
+            <tr>
+                <td>Record Label</td>
+                <td id="label"></td>
+            </tr>
+        </table>
+        <table id="trackList">
+        </table>
+    </div>
+</body>
+
+</html>
