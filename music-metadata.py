@@ -3,13 +3,17 @@
 # Reference Deezer IDs
 # Album 302309: The Highwaymen - The Road goes on Forever
 # Track 30644201: Afroman - I feel Good from Waiting to Inhale
-# Album 592830302: John Kirby - The Classics Sampler (missing ISRCs)
+# Album 592830302: John Kirby - The Classics Sampler (Fully missing ISRCs)
+# Track 514448522: Garbage - Medication from Version 2.0 (20th Anniversary Edition Remastered) (ISRCs not connected to album)
+
+# Found problems: 12901238 Track
 
 import asyncio
 from aiohttp import web
 import aiohttp
 
-from pprint import pp as pprint
+# import rich
+# from pprint import pp as pprint
 
 DEEZER_API = 'https://api.deezer.com'
 SX_API='https://isrc-api.soundexchange.com/api/ext'
@@ -65,7 +69,6 @@ async def getAlbumData(req):
 
     album = Album()
     await album.albumInit(session,albumID)
-    pprint (vars(album))
 
     return web.json_response(vars(album))
 
@@ -79,7 +82,6 @@ async def getAlbumDataFromTrack(req):
 
     album = Album()
     await album.albumInit(session,albumID)
-    print (vars(album))
 
     return web.json_response(vars(album))
 
@@ -155,16 +157,16 @@ class Album:
         # Query soundexchange for information about any tracks that were not included in the album
         # query and populate sxTracks['isrc'] with the results
         missingISRCs = [track['isrc'] for track in data['dzTracks'] if not sxTracks[track['isrc']]]
+        payloads = [{"searchFields": {"isrc": isrc}, "start": 0, "number": SX_RESULTS, "showReleases": True}
+                    for isrc in missingISRCs]
         missingSxTracks = []
-        payload = {"searchFields": {"isrc": None}, "start": 0, "number": SX_RESULTS, "showReleases": True}
         async with asyncio.TaskGroup() as tg:
-            for isrc in missingISRCs:
-                payload['searchFields']['isrc'] = isrc
+            for payload in payloads:
                 missingSxTracks.append(asyncio.create_task(post(session,f'{SX_API}/recordings/',payload)))
         missingSxTracks = await asyncio.gather(*missingSxTracks)
         for track in missingSxTracks:
-            print (track)
-            print ("-----------------END MISSING TRACK-----------------")
+            sxTracks[track['recordings'][0]['isrc']] += [recording for recording in track['recordings']]
+        
 
         return sxTracks
 
