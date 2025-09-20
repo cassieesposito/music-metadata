@@ -11,13 +11,15 @@
 import asyncio
 from aiohttp import web
 import aiohttp
+from lxml import html
 
-# import rich
-# from pprint import pp as pprint
+import rich
+from pprint import pp as pprint
 
 DEEZER_API = 'https://api.deezer.com'
 SX_API='https://isrc-api.soundexchange.com/api/ext'
 SX_RESULTS=100
+DZ_COUNTRIES=set()
 
 ###########
 #  Setup  #
@@ -37,9 +39,23 @@ def app():
 
 async def onStartup(app):
     app['session'] = aiohttp.ClientSession()
+    await populateDzCountries(app['session'])
+    return
+
 
 async def onCleanup(app):
     await app['session'].close()
+    return
+
+
+async def populateDzCountries(session):
+    async with session.get('https://developers.deezer.com/guidelines/countries') as res:
+        content = html.fromstring(await res.text()).get_element_by_id('content')
+    table = next(e for e in content if e.tag == 'table')
+    tbody = next(e for e in table if e.tag == 'tbody')
+    for tr in tbody:
+        DZ_COUNTRIES.add(tr[0].text_content())
+    return 
 
 
 ############
