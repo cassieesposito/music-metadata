@@ -33,6 +33,17 @@
             padding: 6px 10px;
             margin-right: 12px;
         }
+        
+        input:read-only {
+            background-color: black;
+            color: skyblue;
+            width: 500px;
+        }
+        
+        #albumInfo tbody tr th {
+            text-align: left;
+            padding-right: 10px;
+        }
     </style>
 
 </head>
@@ -57,27 +68,41 @@
     <hr>
 
     <div id="output">
-        <table>
-            <tr>
-                <td>Title</td>
-                <td id="title"></td>
-            </tr>
-            <tr>
-                <td>Artist</td>
-                <td id="artist"></td>
-            </tr>
-            <tr>
-                <td>Deezer "Release Date"</td>
-                <td id="deezerReleaseDate"></td>
-            </tr> color: darkmagenta;
-            <tr>
-                <td>UPC</td>
-                <td id="upc"></td>
-            </tr>
-            <tr>
-                <td>Record Label</td>
-                <td id="label"></td>
-            </tr>
+        <table id="albumInfo">
+            <tbody>
+                <tr>
+                    <th>Title:</th>
+                    <td id="title"></td>
+                </tr>
+                <tr>
+                    <th>Artist:</th>
+                    <td id="artist"></td>
+                </tr>
+                <tr>
+                    <th>Deezer "Release Date":</th>
+                    <td id="deezerReleaseDate"></td>
+                </tr>
+                <tr>
+                    <th>UPC:</th>
+                    <td id="upc"></td>
+                </tr>
+                <tr>
+                    <th>Record Label:</th>
+                    <td id="label"></td>
+                </tr>
+                <tr>
+                    <th>Album available:</th>
+                    <td><input id="available" onclick="copyContent(this)" readonly></td>
+                </tr>
+                <tr>
+                    <th>Some tracks available:</th>
+                    <td><input id="partiallyAvailable" onclick="copyContent(this)" readonly></td>
+                </tr>
+                <tr>
+                    <th>Album unavailable:</th>
+                    <td><input id="unavailable" onclick="copyContent(this)" readonly></td>
+                </tr>
+            </tbody>
         </table>
         <table id="trackList">
         </table>

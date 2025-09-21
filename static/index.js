@@ -16,19 +16,21 @@ displayData = () => {
     document.getElementById('deezerReleaseDate').innerHTML = data.deezerReleaseDate
     document.getElementById('upc').innerHTML = `<a href="https://isrc.soundexchange.com/?tab=%22code%22&icpnCode=%22${data.upc}%22&showReleases=true">${data.upc}</a>`
     document.getElementById('label').innerHTML = data.label
-
+    document.getElementById('available').value = data.availability.all
+    document.getElementById('partiallyAvailable').value = data.availability.some
+    document.getElementById('unavailable').value = data.availability.none
     document.getElementById('trackList').innerHTML = `
         <thead>
             <tr>
-                <td>Track</td>
-                <td>Title</td>
-                <td>Artists</td>
-                <td>Length</td>
-                <td>Version</td>
-                <td>Year</td>
-                <td>Label</td>
-                <td>Release Date</td>
-                <td>Recording</td>
+                <th>Track</th>
+                <th>Title</th>
+                <th>Artists</th>
+                <th>Length</th>
+                <th>Version</th>
+                <th>Year</th>
+                <th>Label</th>
+                <th>Release Date</th>
+                <th>Recording</th>
             </tr>
         </thead>
         <tbody id="trackListBody">
@@ -78,3 +80,5 @@ fillTrack = (index) => {
 
     document.getElementById(`sxDate${index}`).innerHTML = track.sx.date[recording]
 }
+
+copyContent = (caller) => { navigator.clipboard.writeText(caller.value) }

@@ -13,13 +13,13 @@ from aiohttp import web
 import aiohttp
 from lxml import html
 
-import rich
-from pprint import pp as pprint
+# import rich
+# from pprint import pp as pprint
 
-DEEZER_API = 'https://api.deezer.com'
+DZ_API = 'https://api.deezer.com'
 SX_API='https://isrc-api.soundexchange.com/api/ext'
 SX_RESULTS=100
-DZ_COUNTRIES=set()
+DZ_REGIONS=set()
 
 ###########
 #  Setup  #
@@ -54,7 +54,7 @@ async def populateDzCountries(session):
     table = next(e for e in content if e.tag == 'table')
     tbody = next(e for e in table if e.tag == 'tbody')
     for tr in tbody:
-        DZ_COUNTRIES.add(tr[0].text_content())
+        DZ_REGIONS.add(tr[0].text_content())
     return 
 
 
@@ -93,7 +93,7 @@ async def getAlbumDataFromTrack(req):
     session = req.app['session'] 
     trackID = req.query['deezerID']
 
-    track = await get(session, f'{DEEZER_API}/track/{trackID}')
+    track = await get(session, f'{DZ_API}/track/{trackID}')
     albumID = track['album']['id']
 
     album = Album()
@@ -116,6 +116,7 @@ class Album:
         self.albumLink = None
         self.artistLink = None
         self.tracks = []
+        self.availability = {}
 
 
     async def albumInit(self, session, albumID):
@@ -141,14 +142,14 @@ class Album:
 
 
     async def _getDzAlbum (self, session, albumID):
-        dzAlbum = await get(session,f'{DEEZER_API}/album/{albumID}')
+        dzAlbum = await get(session,f'{DZ_API}/album/{albumID}')
         return dzAlbum
 
 
     async def _getDzTracks (self, session, data):
         trackIDs = list(map(lambda data: data['id'], data['dzAlbum']['tracks']['data']))
         async with asyncio.TaskGroup() as tg:
-            res = [tg.create_task(get(session,f'{DEEZER_API}/track/{id}')) for id in trackIDs]
+            res = [tg.create_task(get(session,f'{DZ_API}/track/{id}')) for id in trackIDs]
         dzTracks = await asyncio.gather(*res)
         return dzTracks
 
@@ -198,6 +199,8 @@ class Album:
         self.artistLink = f'https://www.deezer.com/artist/{data['dzAlbum']['artist']['id']}'
         for track in data['dzTracks']:
             self.tracks.append(self._buildTrack(track, data))
+        
+        self.availability = self.albumAvailablility(data)
         return
 
 
@@ -212,7 +215,9 @@ class Album:
             'isrc': isrc,
             'artists': list(map(lambda artist: artist['name'], dzTrack['contributors'])),
             'length': f'{int(dzTrack['duration'] / 60)}:{str(dzTrack['duration'] % 60).zfill(2)}',
-            'date': dzTrack['release_date']
+            'date': dzTrack['release_date'],
+            'availableRegions': dzTrack['available_countries'],
+            'unavailableRegions': [country for country in DZ_REGIONS if country not in dzTrack['available_countries']]
             }
         output['sx'] = {
             'title': [ e.get('recordingTitle') for e in data['sxTracks'][isrc] ],
@@ -224,6 +229,28 @@ class Album:
             'date': [ e.get('releaseDate') for e in data['sxTracks'][isrc] ]
             }
         return output
+    
+    def albumAvailablility(self, data):
+        none = set()
+        for region in DZ_REGIONS:
+            if all([region in track['dz']['unavailableRegions'] for track in self.tracks]):
+                none.add(region)
+        
+        allAvailable = DZ_REGIONS.copy()
+        some = set()
+        for track in self.tracks:
+            for region in track['dz']['unavailableRegions']:
+                allAvailable.discard(region)
+                some.add(region)
+        
+        for region in none:
+            some.discard(region)
+
+        if not some and not none:
+            allAvailable = {'XW'}
+        
+        return {'all': list(allAvailable), 'some': list(some), 'none': list(none)}
+
 
 
 ##################
