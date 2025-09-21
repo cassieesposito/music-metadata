@@ -12,8 +12,7 @@ Once the server is running you can access the app through your web browser at ht
 ## TODO
 - A UI that isn't ugly as sin (I don't really have these skills. Someone help?)
 - More search options?
-- Make enter key search
 - CLI?
 - Push data directly to MusicBrainz?
 - Identify albums using other input methods? (spotify metadata? isrc?)
-- requirements.txt
+- Add release type

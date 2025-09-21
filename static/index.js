@@ -3,7 +3,7 @@
 data = {}
 
 lookup = async(endpoint) => {
-    deezerID = document.getElementById(`${endpoint}ID`).value
+    deezerID = document.getElementById(`${endpoint}IDInput`).value
     res = await fetch(`/${endpoint}?` + new URLSearchParams({ deezerID: deezerID }))
     data = await res.json()
     console.log(data)
@@ -82,3 +82,13 @@ fillTrack = (index) => {
 }
 
 copyContent = (caller) => { navigator.clipboard.writeText(caller.value) }
+
+document.addEventListener('DOMContentLoaded', () => {
+    ['album', 'track'].forEach((endpoint) => {
+        document.getElementById(`${endpoint}IDInput`).addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') {
+                document.getElementById(`${endpoint}LookupButton`).click()
+            }
+        })
+    })
+})
